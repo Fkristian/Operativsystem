@@ -1,5 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#define FRAMES 256
+#define SIZE 256
+
+int pageTabel[FRAMES];
+int physicalMemory[FRAMES][SIZE];
+int frame_available_map[FRAMES]; //true is available
+
+int find_free() {
+  for(int i = 0; i < FRAMES; i++) {
+    if(frame_available_map[i] == false ) {
+      frame_available_map[i] = true;
+      return i;
+    }
+  }
+  return -1;
+}
 
 //assumes 16bit input
 int extract_page(int addr){
@@ -12,9 +29,10 @@ int extract_offset(int addr){
 }
 
 int main(int argc, char *argv[]){
-    int pageSice = 256;
-    int addr[7] = {1, 256, 32768, 32769, 128, 65534, 33153};
-    int physicalMemory[pageSice][pageSice];
+    
+    
+ 
+
     char* filename;
 
     if(argc > 1){
@@ -29,39 +47,72 @@ int main(int argc, char *argv[]){
     int length;
     FILE * file = fopen (filename, "r"); 
 
-    int page;
+    int pageNumber;
     int offset;
+    int addres;
+    int switchVar =1;
+    unsigned char buffer[SIZE];
+    int startOfPage;
+    int frameNumber;
+    int whatIsThisValue = 1010101;
+    int pysicalAdress;
     
     while (fgets(line, sizeof(line), file)) {
-        page = extract_page(atoi(line));
+        pageNumber = extract_page(atoi(line));
         offset = extract_offset(atoi(line));
         // printf("Page: %d, Offset: %d \n", page, offset);
-    }
-
+        addres = atoi(line);
+        
     //Function start here
-    int addres = 53683;
-    
-    unsigned char buffer[pageSice];
-    int startOfPage = addres % pageSice;  //  53504
-    FILE *file2;
-    
-    file2 = fopen("data/BACKING_STORE.bin","rb");  // r for read, b for binary
-    
-    fseek(file2, addres, SEEK_SET);  //file är backstoreing, 3098 är ?, seek_set= ??
 
-    fread(buffer,sizeof(buffer),1,file2);
+        switch (switchVar)
+        {
+        case 1:
+            
+            startOfPage = addres % SIZE;  //  53504
+            FILE *file2;
+            
+            file2 = fopen("data/BACKING_STORE.bin","rb");  // r for read, b for binary
+            
+            fseek(file2, addres, SEEK_SET);  //file är backstoreing, 3098 är ?, seek_set= ??
 
+            fread(buffer,sizeof(buffer),1,file2);
+
+                        
+            //frameNumber = addres / 256;            //find frame number
+            //printf("The frame loaded is: \n");
+            //printf("Pysicla memory");
+
+
+            frameNumber = find_free();
+
+             
+            for(int i = 0; i < SIZE; i++){  	        //read out the frame got.
                 
-    int frameNumber = startOfPage / 256;            //find frame number
-    printf("The frame loaded is: \n");
-    for(int i = 0; i < pageSice; i++){  	        //read out the frame got.
-        physicalMemory[frameNumber][i] = buffer[i];     //fills in the pysical memory from what was gatherd
-        printf("%d ", physicalMemory[frameNumber][i]);   
-    } 
-        printf("\n");
+                if(addres == 62493){
+                    printf("%d ", buffer[i]);
+                }
+                physicalMemory[frameNumber][i] = buffer[i];     //fills in the pysical memory from what was gatherd
+             //   printf("%d ", physicalMemory[frameNumber][i]);   
+            } 
+            pysicalAdress = frameNumber * SIZE + offset;
+          
+              if(addres == 62493){
+                    printf("%d this is offcet", offset);
+            }
+            
+            pageTabel[pageNumber] = frameNumber;
+            printf("Virtual address: %d Physical address: %d Value: %d", addres, pysicalAdress, physicalMemory[frameNumber][offset]);
+            printf("\n");
+            //Virtual address: 53683 Physical address: 947 Value: 108
+            //Function end here
+            break;
 
-
-    //Function end here
+        case 2:
+            break;
+        }
+  
+    }
 
     exit(0);
 }
