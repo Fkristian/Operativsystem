@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+/*************** START OF GLOBALS **************************/
+
 #define FRAMES 256
 #define SIZE 256
 #define TLB_SIZE 16
@@ -9,7 +11,9 @@
 int physicalMemory[FRAMES][SIZE];
 int frame_available_map[FRAMES]; //true is available
 
+/***************** END OF GLOBALS **************************/
 
+/*************** START OF TLB STUFF **************************/
 //create a TLB as an array of rows with given data
 struct TLBrow
 {
@@ -35,7 +39,7 @@ int TLB_check_page(int pageNr){
 }
 
 int TLB_get_frame(int pageNr){
-    return (int)(&tlb[pageNr])->frame;
+    return (int)(&tlb[TLB_check_page(pageNr)])->frame;
 }
 
 //inserts a new item to TLB, if full -> replace the oldest
@@ -71,6 +75,11 @@ void TLB_update(){
     }
 }
 
+/********************** END OF TLB STUFF **********************/
+
+
+/************* START OF PAGE TABLE STUFF **********************/
+
 int find_free() {
   for(int i = 0; i < FRAMES; i++) {
     if(frame_available_map[i] == false ) {
@@ -90,6 +99,12 @@ int extract_page(int addr){
 int extract_offset(int addr){
     return addr & 0x00FF;
 }
+
+/*************** END OF PAGE TABLE STUFF ***********************/
+
+
+
+
 
 int main(int argc, char *argv[]){
     
@@ -137,11 +152,13 @@ int main(int argc, char *argv[]){
         offset = extract_offset(atoi(line));
         address = atoi(line);
         
+        //check for TLB hit
         if(TLB_check_page(pageNumber) != -1){
             frameNumber = TLB_get_frame(pageNumber);
             physicalAdress = frameNumber * SIZE + offset;
             printf("Virtual address: %d Physical address: %d Value: %d", address, physicalAdress, physicalMemory[frameNumber][offset]);
             printf("\n");
+            //printf("TLB HIT WOHOO !!!!!!!!!\n");
             numberAdresses++;
             numberOfTLBHits++;
         }
@@ -174,8 +191,8 @@ int main(int argc, char *argv[]){
                 for(int i = 0; i < SIZE; i++){  	       
                     physicalMemory[frameNumber][i] = buffer[i];        
                 } 
+                
                 physicalAdress = frameNumber * SIZE + offset;
-
                 pageTabel[pageNumber] = frameNumber;
                 printf("Virtual address: %d Physical address: %d Value: %d", address, physicalAdress, physicalMemory[frameNumber][offset]);
                 printf("\n");
