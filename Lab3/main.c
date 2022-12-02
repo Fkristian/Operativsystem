@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #define FRAMES 256
 #define SIZE 256
 
-int pageTabel[FRAMES];
+
 int physicalMemory[FRAMES][SIZE];
 int frame_available_map[FRAMES]; //true is available
 
@@ -42,11 +43,12 @@ int main(int argc, char *argv[]){
         printf("Too few argumentos\n");
         exit(0);
     }
-    
+    int numberOfPageFaults = 0;
+    int numberAdresses = 0;
     char line[8];
     int length;
     FILE * file = fopen (filename, "r"); 
-
+    int pageTabel[FRAMES] = {[0 ... FRAMES-1] = -1};
     int pageNumber;
     int offset;
     int addres;
@@ -63,6 +65,11 @@ int main(int argc, char *argv[]){
         addres = atoi(line);
         
     
+        if(pageTabel[pageNumber] == -1){
+            switchVar = 1;
+        }else{
+            switchVar = 2;
+        }
 
         switch (switchVar)
         {
@@ -86,22 +93,30 @@ int main(int argc, char *argv[]){
                 physicalMemory[frameNumber][i] = buffer[i];        
             } 
             pysicalAdress = frameNumber * SIZE + offset;
-          
-   
 
             pageTabel[pageNumber] = frameNumber;
             printf("Virtual address: %d Physical address: %d Value: %d", addres, pysicalAdress, physicalMemory[frameNumber][offset]);
             printf("\n");
+            numberOfPageFaults++;
+            numberAdresses++;
            
             break;
 
         case 2:
 
+            frameNumber = pageTabel[pageNumber];
+            pysicalAdress = frameNumber * SIZE + offset;
+            printf("Virtual address: %d Physical address: %d Value: %d", addres, pysicalAdress, physicalMemory[frameNumber][offset]);
+            printf("\n");
+            numberAdresses++;
         
             break;
         }
   
     }
+    printf("%d %d \n", numberOfPageFaults, numberAdresses);
+    float hold = numberOfPageFaults / (float)numberAdresses;
+    printf("Page-fault rate %.2f", hold);
 
     exit(0);
 }
